@@ -1,26 +1,27 @@
 var socket = io();
-var params = new URLSearchParams(window.location.search)
 
+var params = new URLSearchParams(window.location.search);
 
-if ( !params.has('nombre') || !params.has('sala'))
-{
-    window.location = 'index.html'
-    throw new Error('el nombre y sala son nesesario');
+if (!params.has('nombre') || !params.has('sala')) {
+    window.location = 'index.html';
+    throw new Error('El nombre y sala son necesarios');
 }
 
-let usuario = {
+var usuario = {
     nombre: params.get('nombre'),
-    sala: params.get('sala'),
-}
+    sala: params.get('sala')
+};
+
 
 
 socket.on('connect', function() {
     console.log('Conectado al servidor');
 
+    socket.emit('entrarChat', usuario, function(resp) {
+        console.log('Usuarios conectados', resp);
+        renderizarUsuarios(resp);
+    });
 
-    socket.emit('entrarChat', usuario, (resp) => {
-        console.log(resp);
-    })
 });
 
 // escuchar
@@ -30,14 +31,10 @@ socket.on('disconnect', function() {
 
 });
 
-socket.on('listaPersonas', function(personas){
-    console.log(personas);
-})
-
 
 // Enviar información
-// socket.emit('enviarMensaje', {
-//     usuario: 'Fernando',
+// socket.emit('crearMensaje', {
+//     nombre: 'Fernando',
 //     mensaje: 'Hola Mundo'
 // }, function(resp) {
 //     console.log('respuesta server: ', resp);
@@ -45,12 +42,21 @@ socket.on('listaPersonas', function(personas){
 
 // Escuchar información
 socket.on('crearMensaje', function(mensaje) {
-
-    console.log(mensaje);
-
+    renderizarMensaje(mensaje, false);
+    scrollBottom();
+    console.log('Servidor:', mensaje);
 });
 
-// mensajes privasdos
-socket.on('mensajePrivado', function(mensaje){
-    console.log('mensaje privado', mensaje)
-})
+// Escuchar cambios de usuarios
+// cuando un usuario entra o sale del chat
+socket.on('listaPersonas', function(personas) {
+    console.log(personas);
+    renderizarUsuarios(personas);
+});
+
+// Mensajes privados
+socket.on('mensajePrivado', function(mensaje) {
+
+    console.log('Mensaje Privado:', mensaje);
+
+});

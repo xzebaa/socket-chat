@@ -17,20 +17,29 @@ io.on('connection', (client) => {
 
         let personas = usuarios.agregarPersona(client.id, usuario.nombre, usuario.sala);
         client.broadcast.to(usuario.sala).emit('listaPersonas', usuarios.getPersonasPorSala(usuario.sala));
+        
+        let mensaje = crearMensaje('adminsitrador', `${ !usuario.nombre ? 'undefine':usuario.nombre} a ingresado al chat!`)
+        client.broadcast.to(usuario.sala).emit('crearMensaje', mensaje);
+        
         return callback(usuarios.getPersonasPorSala(usuario.sala));
        
     });
 
-    client.on('crearMensaje', (data) => {
+    client.on('crearMensaje', (data, callback) => {
 
         let persona = usuarios.getPersona(client.id);
         console.log(persona);
         let mensaje = crearMensaje(persona.nombre, data.mensaje);
         client.broadcast.to(persona.sala).emit('crearMensaje', mensaje);
+
+        callback(mensaje);
     })
     
     client.on('disconnect', () => {
         let personaBorrada = usuarios.borrarPersona(client.id);
+
+        if( !personaBorrada ) return;
+        console.log(personaBorrada);
 
         let mensaje = crearMensaje('adminsitrador', `${ !personaBorrada.nombre ? 'undefine':personaBorrada.nombre} Abandono el chat!`)
         
